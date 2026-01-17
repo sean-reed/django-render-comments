@@ -1,0 +1,12 @@
+<div>
+    {# !hide This should never appear in HTML #}
+    {# This should become an HTML comment #}
+    {% comment "!hide" %}
+    This block should never appear in HTML
+    {% endcomment %}
+    {% comment "!hide todo" %}
+    Block with note also hidden
+    {% endcomment %}
+    {% comment %}This block should become an HTML comment{% endcomment %}
+    <p>Visible content</p>
+</div>

@@ -1,0 +1,8 @@
+<div>
+    {# Default: {{ secret }} should appear literally #}
+    {% comment %}{% if debug %}should not execute{% endif %}{% endcomment %}
+    {# !eval user={{ username }} #}
+    {% comment "!eval" %}count={{ count }}{% endcomment %}
+    {% comment "!eval debug" %}value={{ debug_value }}{% endcomment %}
+    <p>{{ visible_content }}</p>
+</div>

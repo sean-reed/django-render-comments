@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ page_title }}</title>
+    {# This comment appears in HTML when DEBUG=True #}
+</head>
+<body>
+    <header>
+        {# !hide This comment is always stripped from output #}
+        <h1>{{ site_name }}</h1>
+        <nav>
+            {# Navigation comment visible in debug mode #}
+            <ul>
+                {% for item in nav_items %}
+                <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% comment "user section" %}
+        Block comment with note visible in debug
+        {% endcomment %}
+
+        {% if user.is_authenticated %}
+        <section class="user-info">
+            {# !eval Evaluated comment shows: {{ user.username }} #}
+            <p>Welcome, {{ user.display_name }}!</p>
+
+            {% comment "!hide internal note" %}
+            This block is always stripped even with eval marker
+            {% endcomment %}
+        </section>
+        {% else %}
+        <section class="login-prompt">
+            {# Inline comment for anonymous users #}
+            <p>Please log in to continue.</p>
+        </section>
+        {% endif %}
+
+        <section class="products">
+            {% comment %}Block comment without note{% endcomment %}
+            <h2>Products</h2>
+            <ul>
+                {% for product in products %}
+                {# Comment inside loop #}
+                <li>
+                    <span class="name">{{ product.name }}</span>
+                    <span class="price">${{ product.price }}</span>
+                    {% if product.on_sale %}
+                    {# !eval On sale for: ${{ product.sale_price }} #}
+                    <span class="sale">On Sale!</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li>No products available</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        {% comment "!eval !hide" %}
+        Hidden despite eval marker - never in output
+        {% endcomment %}
+
+        {# !eval !hide Also hidden despite eval marker #}
+
+        <section class="stats">
+            {# Escaped variable appears literally: {{ stats.count }} #}
+            <p>Total items: {{ stats.count }}</p>
+            <p>Last updated: {{ stats.last_updated }}</p>
+        </section>
+    </main>
+
+    <footer>
+        {% comment "copyright" %}
+        Footer block comment with note
+        {% endcomment %}
+        <p>&copy; {{ current_year }} {{ site_name }}</p>
+        {# !hide Hidden footer note never shown #}
+    </footer>
+</body>
+</html>

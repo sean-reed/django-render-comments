@@ -1,0 +1,7 @@
+<div>
+    {# !hide !eval {{ secret }} #}
+    {# !eval !hide {{ secret }} #}
+    {% comment "!hide !eval" %}{{ secret }}{% endcomment %}
+    {% comment "!eval !hide" %}{{ secret }}{% endcomment %}
+    <p>{{ visible }}</p>
+</div>

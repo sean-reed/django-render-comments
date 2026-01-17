@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.22
+    hooks:
+      - id: uv-lock
+        name: "Update dependency lockfile (uv.lock)"
+      - id: uv-sync
+        name: "Sync Python dependencies"
+        stages:
+          - pre-commit
+          - post-checkout
+          - post-merge
+          - post-rewrite
+  - repo: https://github.com/tsvikas/sync-with-uv
+    rev: v0.5.0
+    hooks:
+      - id: sync-with-uv
+        name: "Sync pre-commit versions with uv"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.13
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: uv run pyright
+        language: system
+        types: [python]
+        pass_filenames: false 
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+      - id: check-added-large-files 
