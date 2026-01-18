@@ -12,13 +12,15 @@ Render Django template comments as HTML comments in DEBUG mode.
 This Django app converts Django template comments into HTML comments when `DEBUG=True`,
 making them visible in the page source and browser developer tools.
 
-Normally, [Django template comments](https://docs.djangoproject.com/en/stable/ref/templates/language/#comments) (e.g. `{# comment #}` and
+Normally, [Django template comments](https://docs.djangoproject.com/en/stable/ref/templates/language/#comments) (`{# comment #}` and
 [`{% comment %}...{% endcomment %}`](https://docs.djangoproject.com/en/stable/ref/templates/builtins/#comment)) are stripped out during template processing, so they do not
-appear in the final HTML output. With this app installed and `DEBUG=True`, these comments
-are transformed into HTML comments (`<!-- comment -->`) instead, allowing developers to see them
+appear in the rendered HTML output. With this app installed, these comments
+are transformed into HTML comments (`<!-- comment -->`) instead when `DEBUG=True`, allowing developers to see them
 directly in the rendered HTML. This is useful for debugging, documentation, and 
-collaboration. The alternative is to use HTML comments 
-directly in templates, as these are not stripped by Django, but they have some drawbacks:
+collaboration. When `DEBUG=False`, comments are stripped and everything inside them is ignored (not parsed) as usual by Django's template engine.
+
+An alternative would be to use HTML comments 
+directly in templates, as these are not stripped by Django, but that approach has some downsides:
 
 - They are included in the rendered output in production (i.e. when `DEBUG=False`), increasing the HTML payload size and potentially 
 exposing internal notes, debugging information, or other sensitive information to end users.
@@ -27,16 +29,16 @@ any content inside them (e.g. `<!-- {% if user.is_authenticated %}...{% endif %}
 the Django template engine, potentially causing errors or unintended behavior (e.g. [see this Stack Overflow post](https://stackoverflow.com/questions/37050172/why-django-finds-errors-inside-comment-blocks-in-template/79365925#79365925)).
 
 By using this app, developers can use Django's comment tags for all their comments, and have them
-visible during development and automatically stripped out in production. 
+visible during development and automatically stripped out in production.
+
+### Additional Features
 
 Any comments that should always
 be hidden (even when `DEBUG=True`) can be marked with a special `!hide` marker to ensure they are never rendered
-in the output HTML. Comment content appears verbatim and any tags it includes are not parsed by Django's template engine, matching Django's standard behavior, but 
-content can optionally be rendered too by adding a `!render` marker to the comment.
+in the output HTML. 
 
-When `DEBUG=False`, comments are stripped and everything inside them is ignored (not parsed) as usual by Django's template engine.
-
-To disable the app from processing comments when `DEBUG=True` you can set the `RENDER_COMMENTS_ENABLED` setting to `False`.
+By default, the content from comments will be shown verbatim in the rendered HTML comment and any tags or filters it includes will be ignored by Django's template engine during processing, 
+matching Django's standard behavior. However, adding a `!render` marker to the comment overrides this so that template tags and filters in the content are processed.
 
 ## Installation
 
@@ -191,9 +193,8 @@ The hidden comments are completely removed from the output.
 
 ## Comment Content Rendering
 
-By default, each comment is wrapped in Django's [`{% verbatim %}`](https://docs.djangoproject.com/en/stable/ref/templates/builtins/#verbatim) tags after 
-conversion to HTML so any template tags it contains appear literally in the HTML output and are not processed by Django's template engine. This matches how Django's 
-comments normally behave (i.e. they are ignored by the template engine).
+By default, any template tags it contains appear literally in the HTML output and are not processed by Django's template engine. This matches how Django's comments normally 
+behave during template rendering.
 
 ### Example
 ```html
@@ -209,29 +210,31 @@ With `DEBUG=True`, renders as:
 
 ### Opt-in Processing with `!render`
 
-For debugging scenarios where you want to see actual variable values in comments, use the `!render` marker. This skips the `{% verbatim %}` wrapping and allows Django to process template tags within the comment:
+For debugging scenarios where you want tags and filters in a comment's content to be processed, for example to see actual variable values, 
+simply add a `!render` marker to the comment as shown below:
 
 | Comment Type | Syntax |
 |--------------|--------|
 | Inline | `{# !render user={{ user.name }} #}` |
 | Block | `{% comment "!render" %}{{ value }}{% endcomment %}` |
-| Block with note | `{% comment "!render debug" %}{{ value }}{% endcomment %}` |
+| Block with note | `{% comment "!render note" %}{{ value }}{% endcomment %}` |
+| Block with dynamic note | `{% comment "!render {{ var }}" %}{{ value }}{% endcomment %}` |
 
 ### Example
 ```html
 {# !render Current user: {{ user.username }} #}
-{% comment "!render debug" %}
+{% comment "!render {{ request.method }}" %}
 Request ID: {{ request.id }}
 {% endcomment %}
 ```
 
-With `DEBUG=True` and `user.username="john"`, `request.id="abc123"`, renders as:
+With `DEBUG=True` and `user.username="john"`, `request.method="GET"`, `request.id="abc123"`, renders as:
 ```html
 <!-- Current user: john -->
-<!-- [debug] Request ID: abc123 -->
+<!-- [GET] Request ID: abc123 -->
 ```
 
-The `!render` marker is removed from the output, and template tags are processed (not wrapped in `{% verbatim %}`). Important: Template rendering will only occur when `DEBUG=True`, so you will usually want to ensure the content does not have side effects outside of the comment (e.g. modifying context variables) that is relied on elsewhere as it will be ignored when `DEBUG=False`.
+The `!render` marker is removed from the output, and template tags are processed (both in the note and in the comment body). Important: Template rendering will only occur when `DEBUG=True`, so you will usually want to ensure the content does not have side effects outside of the comment (e.g. modifying context variables) that is relied on elsewhere as it will be ignored when `DEBUG=False`.
 
 ### Marker Precedence
 
