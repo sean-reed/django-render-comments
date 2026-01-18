@@ -3,7 +3,7 @@
 [![CI](https://github.com/sean-reed/django-render-comments/actions/workflows/ci.yml/badge.svg)](https://github.com/sean-reed/django-render-comments/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/django-render-comments)](https://pypi.org/project/django-render-comments/)
 [![Python](https://img.shields.io/pypi/pyversions/django-render-comments)](https://pypi.org/project/django-render-comments/)
-[![License](https://img.shields.io/pypi/l/django-render-comments)](https://github.com/sean-reed/django-render-comments/blob/main/LICENSE)
+[![License](https://img.shields.io/pypi/l/django-render-comments)](https://github.com/sean-reed/django-render-comments/blob/main/LICENSE.txt)
 
 Render Django template comments as HTML comments in DEBUG mode.
 
