@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        django-version: ["4.2", "5.0", "5.1", "5.2", "6.0"]
+        exclude:
+          - python-version: "3.10"
+            django-version: "6.0"
+          - python-version: "3.11"
+            django-version: "6.0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run tests
+        run: uv run nox -s "tests-${{ matrix.python-version }}(django='${{ matrix.django-version }}')"
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12' && matrix.django-version == '5.2'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run linting
+        run: uv run nox -s lint
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run type checking
+        run: uv run nox -s typecheck
+
+  version-check:
+    name: Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check version consistency
+        run: |
+          PYPROJECT_VERSION=$(grep -Po '(?<=^version = ")[^"]+' pyproject.toml)
+          INIT_VERSION=$(grep -Po '(?<=^__version__ = ")[^"]+' src/django_render_comments/__init__.py)
+          if [ "$PYPROJECT_VERSION" != "$INIT_VERSION" ]; then
+            echo "Version mismatch!"
+            echo "pyproject.toml: $PYPROJECT_VERSION"
+            echo "__init__.py: $INIT_VERSION"
+            exit 1
+          fi
+          echo "Versions match: $PYPROJECT_VERSION"

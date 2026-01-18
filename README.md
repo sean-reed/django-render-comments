@@ -263,8 +263,8 @@ This ensures that marking a comment as hidden cannot be accidentally bypassed by
 
 ## Requirements
 
-- Python 3.12+
-- Django 4.2+
+- Python 3.10+
+- Django 4.2, 5.0, 5.1, 5.2, or 6.0
 
 ## Development
 
@@ -273,20 +273,29 @@ This ensures that marking a comment as hidden cannot be accidentally bypassed by
 git clone https://github.com/sean-reed/django-render-comments
 cd django-render-comments
 
-# Install with uv
+# Install dependencies
 uv sync --group dev
 
-# Run tests
+# Run tests (current environment)
 uv run pytest
 
-# Run with coverage
+# Run tests with coverage
 uv run pytest --cov
 
-# Type checking
-uv run pyright
+# Run full test matrix (Python 3.10-3.13 x Django 4.2-6.0)
+uv run nox
 
-# Linting
-uv run ruff check src tests
+# Run specific Python/Django combination
+uv run nox -s "tests-3.10(django='4.2')"
+
+# Run linting
+uv run nox -s lint
+
+# Run type checking
+uv run nox -s typecheck
+
+# List all available test sessions
+uv run nox --list
 ```
 
 ## License
