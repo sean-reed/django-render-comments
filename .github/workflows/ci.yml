@@ -36,7 +36,7 @@ jobs:
         run: uv sync --group dev
 
       - name: Run tests
-        run: uv run nox -s "tests(python='${{ matrix.python-version }}', django='${{ matrix.django-version }}')"
+        run: uv run nox -s "tests-${{ matrix.python-version }}(django='${{ matrix.django-version }}')"
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12' && matrix.django-version == '5.2'
