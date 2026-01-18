@@ -1,5 +1,10 @@
 # django-render-comments
 
+[![CI](https://github.com/sean-reed/django-render-comments/actions/workflows/ci.yml/badge.svg)](https://github.com/sean-reed/django-render-comments/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/django-render-comments)](https://pypi.org/project/django-render-comments/)
+[![Python](https://img.shields.io/pypi/pyversions/django-render-comments)](https://pypi.org/project/django-render-comments/)
+[![License](https://img.shields.io/pypi/l/django-render-comments)](https://github.com/sean-reed/django-render-comments/blob/main/LICENSE)
+
 Render Django template comments as HTML comments in DEBUG mode.
 
 ## Overview
@@ -186,7 +191,7 @@ The hidden comments are completely removed from the output.
 
 ## Comment Content Rendering
 
-By default, each comment is wrapped in Django's [`{% verbatim %}`](https://docs.djangoproject.com/en/6.0/ref/templates/builtins/#verbatim) tags after 
+By default, each comment is wrapped in Django's [`{% verbatim %}`](https://docs.djangoproject.com/en/stable/ref/templates/builtins/#verbatim) tags after 
 conversion to HTML so any template tags it contains appear literally in the HTML output and are not processed by Django's template engine. This matches how Django's 
 comments normally behave (i.e. they are ignored by the template engine).
 
