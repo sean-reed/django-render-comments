@@ -26,7 +26,7 @@
 
         {% if user.is_authenticated %}
         <section class="user-info">
-            {# !eval Evaluated comment shows: {{ user.username }} #}
+            {# !render Evaluated comment shows: {{ user.username }} #}
             <p>Welcome, {{ user.display_name }}!</p>
 
             {% comment "!hide internal note" %}
@@ -50,7 +50,7 @@
                     <span class="name">{{ product.name }}</span>
                     <span class="price">${{ product.price }}</span>
                     {% if product.on_sale %}
-                    {# !eval On sale for: ${{ product.sale_price }} #}
+                    {# !render On sale for: ${{ product.sale_price }} #}
                     <span class="sale">On Sale!</span>
                     {% endif %}
                 </li>
@@ -60,11 +60,11 @@
             </ul>
         </section>
 
-        {% comment "!eval !hide" %}
+        {% comment "!render !hide" %}
         Hidden despite eval marker - never in output
         {% endcomment %}
 
-        {# !eval !hide Also hidden despite eval marker #}
+        {# !render !hide Also hidden despite eval marker #}
 
         <section class="stats">
             {# Escaped variable appears literally: {{ stats.count }} #}

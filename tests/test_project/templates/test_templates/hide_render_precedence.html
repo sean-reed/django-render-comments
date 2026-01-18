@@ -1,0 +1,7 @@
+<div>
+    {# !hide !render {{ secret }} #}
+    {# !render !hide {{ secret }} #}
+    {% comment "!hide !render" %}{{ secret }}{% endcomment %}
+    {% comment "!render !hide" %}{{ secret }}{% endcomment %}
+    <p>{{ visible }}</p>
+</div>

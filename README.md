@@ -8,30 +8,30 @@ This Django app converts Django template comments into HTML comments when `DEBUG
 making them visible in the page source and browser developer tools.
 
 Normally, Django template comments (e.g. `{# comment #}` and
-`{% comment %}...{% endcomment %}`) are stripped out during template rendering, so they do not
+`{% comment %}...{% endcomment %}`) are stripped out during template processing, so they do not
 appear in the final HTML output. With this app installed and `DEBUG=True`, these comments
-are transformed into HTML comments (`<!-- comment -->`), allowing developers to see them
+are transformed into HTML comments (`<!-- comment -->`) instead, allowing developers to see them
 directly in the rendered HTML. This is useful for debugging, documentation, and 
 collaboration. The alternative is to use HTML comments 
 directly in templates, as these are not stripped by Django, but they have some drawbacks:
 
-
-1. They are included in the rendered output in production (i.e. when `DEBUG=False`), increasing the HTML payload size and potentially 
+- They are included in the rendered output in production (i.e. when `DEBUG=False`), increasing the HTML payload size and potentially 
 exposing internal notes, debugging information, or other sensitive information to end users.
-2. HTML comments are not ignored by the Django template engine so 
+- HTML comments are not ignored by the Django template engine so 
 any content inside them (e.g. `<!-- {% if user.is_authenticated %}...{% endif %} -->`) will still be processed by
-the Django template engine, potentially causing errors or unintended behavior (e.g. [this Stack Overflow post](https://stackoverflow.com/questions/37050172/why-django-finds-errors-inside-comment-blocks-in-template/79365925#79365925)).
+the Django template engine, potentially causing errors or unintended behavior (e.g. [see this Stack Overflow post](https://stackoverflow.com/questions/37050172/why-django-finds-errors-inside-comment-blocks-in-template/79365925#79365925)).
 
-By using this app, developers can keep all their comments in Django template syntax, and have them
-visible during development and automatically stripped out in production. Any comments that should always
+By using this app, developers can use Django's comment tags for all their comments, and have them
+visible during development and automatically stripped out in production. 
+
+Any comments that should always
 be hidden (even when `DEBUG=True`) can be marked with a special `!hide` marker to ensure they are never rendered
-in the output HTML. Anything inside comments is escaped by default to prevent parsing by Django's template engine and
-exposure of sensitive data or template errors, matching Django's standard behavior, but can optionally be evaluated 
-when `DEBUG=True` by adding an `!eval` marker to the comment.
+in the output HTML. Comment content appears verbatim and any tags it includes are not parsed by Django's template engine, matching Django's standard behavior, but 
+content can optionally be rendered too by adding a `!render` marker to the comment.
 
-When `DEBUG=False`, comments are stripped and everything inside them is ignored (not parsed) as usual.
+When `DEBUG=False`, comments are stripped and everything inside them is ignored (not parsed) as usual by Django's template engine.
 
-To disable the feature even in `DEBUG` mode, you can set the `RENDER_COMMENTS_ENABLED` setting to `False`.
+To disable the app from processing comments when `DEBUG=True` you can set the `RENDER_COMMENTS_ENABLED` setting to `False`.
 
 ## Installation
 
@@ -46,6 +46,8 @@ uv add django-render-comments
 ```
 
 ## Quick Start
+
+In your Django `settings.py`:
 
 1. **Add to INSTALLED_APPS** (optional, for app registry):
 
@@ -126,8 +128,7 @@ Note: Template tags like `{{ user }}` appear literally in the comment output - t
 
 ```python
 # settings.py
-DEBUG = True
-RENDER_COMMENTS_ENABLED = False  # Comments will be stripped, not converted
+RENDER_COMMENTS_ENABLED = False  # App will not process comments, even if DEBUG=True.
 ```
 
 ## Comment Syntax Support
@@ -183,15 +184,11 @@ With `DEBUG=True`, renders as:
 
 The hidden comments are completely removed from the output.
 
-## Template Tag Escaping
+## Comment Content Rendering
 
-By default, template tags inside comments are **escaped** - they appear literally in the HTML output and are not processed by Django's template engine. This prevents:
-
-1. **Accidental data exposure**: Commented-out code like `{# {{ user.email }} #}` won't leak the actual email
-2. **Template errors**: Commented-out code like `{% if %}` blocks won't cause syntax errors
-3. **Unexpected behavior**: Commented code behaves as truly "commented out"
-
-This matches how Django's native `{% comment %}` block works - content inside is protected from processing.
+By default, each comment is wrapped in Django's [`{% verbatim %}`](https://docs.djangoproject.com/en/6.0/ref/templates/builtins/#verbatim) tags after 
+conversion to HTML so any template tags it contains appear literally in the HTML output and are not processed by Django's template engine. This matches how Django's 
+comments normally behave (i.e. they are ignored by the template engine).
 
 ### Example
 ```html
@@ -205,22 +202,20 @@ With `DEBUG=True`, renders as:
 <!-- {% if debug %}show{% endif %} -->
 ```
 
-The template tags appear literally - `{{ user.email }}` is NOT replaced with the actual email.
+### Opt-in Processing with `!render`
 
-### Opt-in Processing with `!eval`
-
-For debugging scenarios where you want to see actual variable values in comments, use the `!eval` marker:
+For debugging scenarios where you want to see actual variable values in comments, use the `!render` marker. This skips the `{% verbatim %}` wrapping and allows Django to process template tags within the comment:
 
 | Comment Type | Syntax |
 |--------------|--------|
-| Inline | `{# !eval user={{ user.name }} #}` |
-| Block | `{% comment "!eval" %}{{ value }}{% endcomment %}` |
-| Block with note | `{% comment "!eval debug" %}{{ value }}{% endcomment %}` |
+| Inline | `{# !render user={{ user.name }} #}` |
+| Block | `{% comment "!render" %}{{ value }}{% endcomment %}` |
+| Block with note | `{% comment "!render debug" %}{{ value }}{% endcomment %}` |
 
 ### Example
 ```html
-{# !eval Current user: {{ user.username }} #}
-{% comment "!eval debug" %}
+{# !render Current user: {{ user.username }} #}
+{% comment "!render debug" %}
 Request ID: {{ request.id }}
 {% endcomment %}
 ```
@@ -231,20 +226,19 @@ With `DEBUG=True` and `user.username="john"`, `request.id="abc123"`, renders as:
 <!-- [debug] Request ID: abc123 -->
 ```
 
-The `!eval` marker is removed from the output, and template tags are processed. Important: Evaluation will only occur when `DEBUG=True` so you will usually want
-to ensure the content does not have side effects outside of the comment (e.g. modifying context variables used elsewhere) as it will be ignored when `DEBUG=False`.
+The `!render` marker is removed from the output, and template tags are processed (not wrapped in `{% verbatim %}`). Important: Template rendering will only occur when `DEBUG=True`, so you will usually want to ensure the content does not have side effects outside of the comment (e.g. modifying context variables) that is relied on elsewhere as it will be ignored when `DEBUG=False`.
 
 ### Marker Precedence
 
-If both `!hide` and `!eval` markers are present in a comment (in any order), `!hide` always takes precedence. The comment will be hidden and no template processing will occur.
+If both `!hide` and `!render` markers are present in a comment (in any order), `!hide` always takes precedence. The comment will be hidden and no template processing will occur.
 
 ```html
-{# !hide !eval {{ secret }} #}        {# Hidden - !hide wins #}
-{# !eval !hide {{ secret }} #}        {# Also hidden - !hide still wins #}
-{% comment "!eval !hide" %}...{% endcomment %}  {# Hidden #}
+{# !hide !render {{ secret }} #}        {# Hidden - !hide wins #}
+{# !render !hide {{ secret }} #}        {# Also hidden - !hide still wins #}
+{% comment "!render !hide" %}...{% endcomment %}  {# Hidden #}
 ```
 
-This ensures that marking a comment as hidden cannot be accidentally bypassed by also adding `!eval`.
+This ensures that marking a comment as hidden cannot be accidentally bypassed by also adding `!render`.
 
 ## Edge Cases & Limitations
 

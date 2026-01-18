@@ -222,31 +222,31 @@ class TestTemplateTagEscaping:
         # The {% if debug %} tag should appear literally
         assert "{% if debug %}" in result
 
-    def test_eval_marker_processes_variables(self):
-        """!eval marker allows template variables to be processed."""
+    def test_render_marker_processes_variables(self):
+        """!render marker allows template variables to be processed."""
         result = render_to_string(
             "test_templates/template_tags.html",
             {"username": "john_doe", "count": 42, "debug_value": "dbg", "visible_content": "x"},
         )
-        # !eval comments should have processed variables
+        # !render comments should have processed variables
         assert "user=john_doe" in result
         assert "count=42" in result
-        # !eval with note should also process and include note
+        # !render with note should also process and include note
         assert "[debug]" in result
         assert "value=dbg" in result
 
-    def test_eval_marker_removes_eval_from_output(self):
-        """!eval marker itself should not appear in final output."""
+    def test_render_marker_removes_render_from_output(self):
+        """!render marker itself should not appear in final output."""
         result = render_to_string(
             "test_templates/template_tags.html",
             {"username": "test", "count": 1, "debug_value": "test", "visible_content": "x"},
         )
-        assert "!eval" not in result
+        assert "!render" not in result
 
 
 @pytest.mark.django_db
-class TestHideEvalPrecedence:
-    """Tests verifying !hide always takes precedence over !eval in rendered output."""
+class TestHideRenderPrecedence:
+    """Tests verifying !hide always takes precedence over !render in rendered output."""
 
     @pytest.fixture(autouse=True)
     def setup(self, settings):
@@ -254,24 +254,24 @@ class TestHideEvalPrecedence:
         if hasattr(settings, "RENDER_COMMENTS_ENABLED"):
             del settings.RENDER_COMMENTS_ENABLED
 
-    def test_hide_eval_combination_not_in_output(self):
-        """Comments with both !hide and !eval should not appear in output."""
+    def test_hide_render_combination_not_in_output(self):
+        """Comments with both !hide and !render should not appear in output."""
         result = render_to_string(
-            "test_templates/hide_eval_precedence.html",
+            "test_templates/hide_render_precedence.html",
             {"secret": "TOP_SECRET", "visible": "shown"},
         )
         # The secret value should never appear
         assert "TOP_SECRET" not in result
         # Neither should the markers
         assert "!hide" not in result
-        assert "!eval" not in result
+        assert "!render" not in result
         # But visible content should render
         assert "shown" in result
 
-    def test_hide_eval_no_html_comments_for_hidden(self):
-        """Hidden comments should not produce HTML comments regardless of !eval."""
+    def test_hide_render_no_html_comments_for_hidden(self):
+        """Hidden comments should not produce HTML comments regardless of !render."""
         result = render_to_string(
-            "test_templates/hide_eval_precedence.html",
+            "test_templates/hide_render_precedence.html",
             {"secret": "TOP_SECRET", "visible": "shown"},
         )
         # Should only have the visible paragraph, no HTML comments with secret
@@ -399,12 +399,12 @@ class TestRealisticPageDebugTrue:
         assert "!hide" not in result
 
     def test_eval_comments_process_variables(self):
-        """Comments with !eval should have variables processed."""
+        """Comments with !render should have variables processed."""
         result = render_to_string(
             "test_templates/realistic_page.html",
             RealisticPageContext.get_context(),
         )
-        # !eval comments should show actual values
+        # !render comments should show actual values
         assert "<!-- Evaluated comment shows: testuser -->" in result
         assert "<!-- On sale for: $24.99 -->" in result
 
