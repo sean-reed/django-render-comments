@@ -390,74 +390,74 @@ spanning multiple lines
         )
 
 
-class TestEvalMarker:
-    """Tests for !eval marker (opt-in to process template tags, skip verbatim)."""
+class TestRenderMarker:
+    """Tests for !render marker (opt-in to process template tags, skip verbatim)."""
 
     def test_inline_eval_skips_verbatim(self):
-        """Inline comment with !eval is not wrapped in verbatim."""
-        source = "{# !eval {{ user.name }} #}"
+        """Inline comment with !render is not wrapped in verbatim."""
+        source = "{# !render {{ user.name }} #}"
         result = preprocess_template(source)
         assert result == "<!-- {{ user.name }} -->"
 
     def test_inline_eval_removes_marker(self):
-        """!eval marker is removed from output."""
-        source = "{# !eval some content #}"
+        """!render marker is removed from output."""
+        source = "{# !render some content #}"
         result = preprocess_template(source)
         assert result == "<!-- some content -->"
-        assert "!eval" not in result
+        assert "!render" not in result
 
     def test_inline_eval_with_extra_whitespace(self):
-        """!eval works with extra whitespace."""
-        source = "{#   !eval   {{ var }}   #}"
+        """!render works with extra whitespace."""
+        source = "{#   !render   {{ var }}   #}"
         result = preprocess_template(source)
         assert result == "<!-- {{ var }} -->"
 
     def test_block_eval_skips_verbatim(self):
-        """Block comment with !eval note is not wrapped in verbatim."""
-        source = '{% comment "!eval" %}{{ user.name }}{% endcomment %}'
+        """Block comment with !render note is not wrapped in verbatim."""
+        source = '{% comment "!render" %}{{ user.name }}{% endcomment %}'
         result = preprocess_template(source)
         assert result == "<!-- {{ user.name }} -->"
 
     def test_block_eval_single_quotes(self):
-        """Block comment with !eval works with single quotes."""
-        source = "{% comment '!eval' %}{{ var }}{% endcomment %}"
+        """Block comment with !render works with single quotes."""
+        source = "{% comment '!render' %}{{ var }}{% endcomment %}"
         result = preprocess_template(source)
         assert result == "<!-- {{ var }} -->"
 
     def test_block_eval_with_note(self):
-        """Block comment with !eval and additional note."""
-        source = '{% comment "!eval debug" %}{{ user.name }}{% endcomment %}'
+        """Block comment with !render and additional note."""
+        source = '{% comment "!render debug" %}{{ user.name }}{% endcomment %}'
         result = preprocess_template(source)
         assert result == "<!-- [debug] {{ user.name }} -->"
-        assert "!eval" not in result
+        assert "!render" not in result
 
     def test_block_eval_with_note_single_quotes(self):
-        """Block comment with !eval and note works with single quotes."""
-        source = "{% comment '!eval todo' %}{{ var }}{% endcomment %}"
+        """Block comment with !render and note works with single quotes."""
+        source = "{% comment '!render todo' %}{{ var }}{% endcomment %}"
         result = preprocess_template(source)
         assert result == "<!-- [todo] {{ var }} -->"
 
     def test_inline_eval_escapes_dashes(self):
-        """!eval comments still escape HTML-unsafe dashes."""
-        source = "{# !eval foo--bar #}"
+        """!render comments still escape HTML-unsafe dashes."""
+        source = "{# !render foo--bar #}"
         result = preprocess_template(source)
         assert result == "<!-- foo- -bar -->"
 
     def test_block_eval_escapes_dashes(self):
-        """!eval block comments still escape HTML-unsafe dashes."""
-        source = '{% comment "!eval" %}foo--bar{% endcomment %}'
+        """!render block comments still escape HTML-unsafe dashes."""
+        source = '{% comment "!render" %}foo--bar{% endcomment %}'
         result = preprocess_template(source)
         assert result == "<!-- foo- -bar -->"
 
     def test_eval_and_normal_mixed(self):
         """Mix of eval and normal comments."""
-        source = "{# !eval {{ x }} #}{# {{ y }} #}"
+        source = "{# !render {{ x }} #}{# {{ y }} #}"
         result = preprocess_template(source)
         assert result == "<!-- {{ x }} -->{% verbatim %}<!-- {{ y }} -->{% endverbatim %}"
 
     def test_block_eval_multiline(self):
         """Block eval comment with multiline content."""
-        source = """{% comment "!eval" %}
+        source = """{% comment "!render" %}
 {{ user.name }}
 {{ user.email }}
 {% endcomment %}"""
@@ -501,50 +501,50 @@ class TestTemplateTagEscaping:
         assert result == "{% verbatim %}<!-- [debug] {{ value }} -->{% endverbatim %}"
 
 
-class TestHideEvalPrecedence:
-    """Tests verifying !hide always takes precedence over !eval."""
+class TestHideRenderPrecedence:
+    """Tests verifying !hide always takes precedence over !render."""
 
     def test_inline_hide_then_eval(self):
-        """Inline comment with !hide before !eval is hidden."""
-        source = "{# !hide !eval {{ secret }} #}"
+        """Inline comment with !hide before !render is hidden."""
+        source = "{# !hide !render {{ secret }} #}"
         result = preprocess_template(source)
         assert result == source  # Unchanged, left for Django to strip
 
     def test_inline_eval_then_hide(self):
-        """Inline comment with !eval before !hide is still hidden."""
-        source = "{# !eval !hide {{ secret }} #}"
+        """Inline comment with !render before !hide is still hidden."""
+        source = "{# !render !hide {{ secret }} #}"
         result = preprocess_template(source)
         assert result == source  # Unchanged, left for Django to strip
 
     def test_block_hide_then_eval(self):
-        """Block comment with !hide before !eval is hidden."""
-        source = '{% comment "!hide !eval" %}{{ secret }}{% endcomment %}'
+        """Block comment with !hide before !render is hidden."""
+        source = '{% comment "!hide !render" %}{{ secret }}{% endcomment %}'
         result = preprocess_template(source)
         assert result == source  # Unchanged
 
     def test_block_eval_then_hide(self):
-        """Block comment with !eval before !hide is still hidden."""
-        source = '{% comment "!eval !hide" %}{{ secret }}{% endcomment %}'
+        """Block comment with !render before !hide is still hidden."""
+        source = '{% comment "!render !hide" %}{{ secret }}{% endcomment %}'
         result = preprocess_template(source)
         assert result == source  # Unchanged
 
     def test_block_eval_then_hide_with_note(self):
-        """Block comment with !eval !hide and note is still hidden."""
-        source = '{% comment "!eval !hide debug" %}{{ secret }}{% endcomment %}'
+        """Block comment with !render !hide and note is still hidden."""
+        source = '{% comment "!render !hide debug" %}{{ secret }}{% endcomment %}'
         result = preprocess_template(source)
         assert result == source  # Unchanged
 
     def test_inline_hide_eval_no_template_processing(self):
-        """!hide !eval combination should not process template tags."""
-        source = "{# !hide !eval {{ user.secret }} #}"
+        """!hide !render combination should not process template tags."""
+        source = "{# !hide !render {{ user.secret }} #}"
         result = preprocess_template(source)
         # Should be unchanged - no processing of {{ user.secret }}
         assert result == source
         assert "user.secret" in result  # Tag still in original form
 
     def test_inline_eval_hide_no_template_processing(self):
-        """!eval !hide combination should not process template tags."""
-        source = "{# !eval !hide {{ user.secret }} #}"
+        """!render !hide combination should not process template tags."""
+        source = "{# !render !hide {{ user.secret }} #}"
         result = preprocess_template(source)
         # Should be unchanged - no processing of {{ user.secret }}
         assert result == source

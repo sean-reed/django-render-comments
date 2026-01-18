@@ -13,10 +13,10 @@ Hidden comments (skipped, not converted - Django strips them normally):
 Template tag escaping:
 - By default, converted comments are wrapped in {% verbatim %} to prevent
   Django from processing any template tags inside the comment content.
-- Use !eval marker to opt-in to processing template tags:
-  - Inline: {# !eval {{ var }} #}
-  - Block: {% comment "!eval" %}{{ var }}{% endcomment %}
-  - Block with note: {% comment "!eval note" %}{{ var }}{% endcomment %}
+- Use !render marker to opt-in to processing template tags:
+  - Inline: {# !render {{ var }} #}
+  - Block: {% comment "!render" %}{{ var }}{% endcomment %}
+  - Block with note: {% comment "!render note" %}{{ var }}{% endcomment %}
 
 Edge cases handled:
 - Multi-line block comments
@@ -64,10 +64,10 @@ def _convert_inline_comment(match: re.Match[str]) -> str:
     for Django to strip during normal template rendering.
 
     By default, output is wrapped in {% verbatim %} to prevent Django from
-    processing any template tags in the comment content. Use !eval marker
-    to opt-in to processing: {# !eval {{ var }} #}
+    processing any template tags in the comment content. Use !render marker
+    to opt-in to processing: {# !render {{ var }} #}
 
-    Note: !hide always takes precedence over !eval. If both markers are
+    Note: !hide always takes precedence over !render. If both markers are
     present (in any order), the comment is hidden.
 
     Args:
@@ -80,15 +80,15 @@ def _convert_inline_comment(match: re.Match[str]) -> str:
     stripped = content.lstrip()
 
     # Skip hidden comments - leave for Django to strip
-    # !hide takes precedence over !eval, so check for !hide anywhere in markers
+    # !hide takes precedence over !render, so check for !hide anywhere in markers
     if stripped.startswith("!hide"):
         return match.group(0)
-    if stripped.startswith("!eval") and stripped[5:].lstrip().startswith("!hide"):
+    if stripped.startswith("!render") and stripped[7:].lstrip().startswith("!hide"):
         return match.group(0)
 
-    # Check for !eval marker - process tags, don't wrap in verbatim
-    if stripped.startswith("!eval"):
-        content = stripped[5:].lstrip()  # Remove !eval prefix
+    # Check for !render marker - process tags, don't wrap in verbatim
+    if stripped.startswith("!render"):
+        content = stripped[7:].lstrip()  # Remove !render prefix
         escaped = escape_html_comment(content)
         return f"<!-- {escaped} -->"
 
@@ -106,10 +106,10 @@ def _convert_block_comment(match: re.Match[str]) -> str:
     rendering.
 
     By default, output is wrapped in {% verbatim %} to prevent Django from
-    processing any template tags in the comment content. Use !eval marker
-    to opt-in to processing: {% comment "!eval" %} or {% comment "!eval note" %}
+    processing any template tags in the comment content. Use !render marker
+    to opt-in to processing: {% comment "!render" %} or {% comment "!render note" %}
 
-    Note: !hide always takes precedence over !eval. If both markers are
+    Note: !hide always takes precedence over !render. If both markers are
     present (in any order), the comment is hidden.
 
     Args:
@@ -123,19 +123,19 @@ def _convert_block_comment(match: re.Match[str]) -> str:
     content = match.group(2)
 
     # Skip hidden comments - leave for Django to strip
-    # !hide takes precedence over !eval, so check for !hide anywhere in note
+    # !hide takes precedence over !render, so check for !hide anywhere in note
     if note and note.startswith("!hide"):
         return match.group(0)
-    if note and note.startswith("!eval") and "!hide" in note:
+    if note and note.startswith("!render") and "!hide" in note:
         return match.group(0)
 
-    # Check for !eval marker - process tags, don't wrap in verbatim
+    # Check for !render marker - process tags, don't wrap in verbatim
     eval_mode = False
     display_note = note
-    if note and note.startswith("!eval"):
+    if note and note.startswith("!render"):
         eval_mode = True
-        # Remove !eval prefix from note, keep remaining note text if any
-        display_note = note[5:].lstrip() or None
+        # Remove !render prefix from note, keep remaining note text if any
+        display_note = note[7:].lstrip() or None
 
     escaped_content = escape_html_comment(content.strip())
 
