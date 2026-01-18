@@ -12,8 +12,8 @@ Render Django template comments as HTML comments in DEBUG mode.
 This Django app converts Django template comments into HTML comments when `DEBUG=True`,
 making them visible in the page source and browser developer tools.
 
-Normally, Django template comments (e.g. `{# comment #}` and
-`{% comment %}...{% endcomment %}`) are stripped out during template processing, so they do not
+Normally, [Django template comments](https://docs.djangoproject.com/en/stable/ref/templates/language/#comments) (e.g. `{# comment #}` and
+[`{% comment %}...{% endcomment %}`](https://docs.djangoproject.com/en/stable/ref/templates/builtins/#comment)) are stripped out during template processing, so they do not
 appear in the final HTML output. With this app installed and `DEBUG=True`, these comments
 are transformed into HTML comments (`<!-- comment -->`) instead, allowing developers to see them
 directly in the rendered HTML. This is useful for debugging, documentation, and 
